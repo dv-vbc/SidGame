@@ -52,10 +52,10 @@
   <h1>Snake Game</h1>
   <canvas id="game" width="400" height="400"></canvas>
   <div id="controls">
-    <button id="startBtn">开始游戏 (S)</button>
-    <button id="pauseBtn" disabled>暂停 (P)</button>
-    <button id="resumeBtn" disabled>继续 (R)</button>
-    <button id="restartBtn" disabled>重新开始 (N)</button>
+    <button id="startBtn">开始游戏</button>
+    <button id="pauseBtn" disabled>暂停</button>
+    <button id="resumeBtn" disabled>继续</button>
+    <button id="restartBtn" disabled>重新开始</button>
   </div>
   <div id="info">
     <span id="score">得分: 0</span> |
@@ -66,7 +66,7 @@
     <strong>操作说明：</strong>
     <ul>
       <li>方向键 ↑ ↓ ← → 控制蛇的移动。</li>
-      <li>按钮快捷键：S 开始，P 暂停，R 继续，N 重新开始。</li>
+      <li>空格键用于开始/暂停/继续，Esc 键用于重新开始。</li>
       <li>每吃 5 颗食物提升一级，蛇速随之加快。</li>
       <li>游戏结束后会记录本局得分，最高分保存在本地（localStorage）。</li>
     </ul>
@@ -273,10 +273,7 @@
         return;
       }
       // 其他快捷键
-      if(key === 's' && !startBtn.disabled){ e.preventDefault(); startBtn.click(); }
-      else if(key === 'p' && !pauseBtn.disabled){ e.preventDefault(); pauseBtn.click(); }
-      else if(key === 'r' && !resumeBtn.disabled){ e.preventDefault(); resumeBtn.click(); }
-      else if(key === 'n' && !restartBtn.disabled){ e.preventDefault(); restartBtn.click(); }
+      // 其他键仅用于方向控制
       else { changeDir(e); }
     });
     // 初始显示状态，只显示开始按钮
