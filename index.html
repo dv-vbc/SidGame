@@ -155,11 +155,12 @@
       startBtn.disabled = false;
       pauseBtn.disabled = true;
       resumeBtn.disabled = true;
-      restartBtn.disabled = false;
+      // 游戏结束后不显示重新开始按钮（可通过 ESC 重新开始）
+      restartBtn.disabled = true;
       startBtn.style.display = 'inline-block';
       pauseBtn.style.display = 'none';
       resumeBtn.style.display = 'none';
-      restartBtn.style.display = 'inline-block';
+      restartBtn.style.display = 'none';
     }
     function changeDir(e){
       if(!running) return;
