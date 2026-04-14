@@ -191,6 +191,9 @@
       clearInterval(intervalId);
       pauseBtn.disabled = true;
       resumeBtn.disabled = false;
+      // 在暂停时显示重新开始按钮，让玩家可以清空状态重新开始
+      restartBtn.disabled = false;
+      restartBtn.style.display = 'inline-block';
       pauseBtn.style.display = 'none';
       resumeBtn.style.display = 'inline-block';
     };
