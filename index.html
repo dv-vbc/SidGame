@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
   <title>Snake Game</title>
   <style>
     /* 页面整体布局 */
@@ -18,7 +19,7 @@
       color:#eee;
     }
     h1{margin-top:20px;}
-    canvas{background:#000;display:block;margin-top:15px;box-shadow:0 0 15px rgba(0,0,0,0.7);}
+    canvas{background:#000;display:block;margin-top:15px;box-shadow:0 0 15px rgba(0,0,0,0.7);width:100%;max-width:400px;height:auto;aspect-ratio:1/1;}
     /* 控制按钮 */
     #controls{margin-top:15px;}
     button{
@@ -171,6 +172,31 @@
         case 'ArrowRight': if(dir.x===0) dir={x:grid,y:0}; break;
       }
     }
+    // 触控滑动控制（适配移动端）
+    let touchStartX = null, touchStartY = null;
+    function handleTouchStart(e){
+      const touch = e.touches[0];
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+    }
+    function handleTouchEnd(e){
+      if(touchStartX === null) return;
+      const touch = e.changedTouches[0];
+      const dx = touch.clientX - touchStartX;
+      const dy = touch.clientY - touchStartY;
+      if(Math.abs(dx) > Math.abs(dy)){
+        // 横向滑动
+        if(dx > 30 && dir.x===0) dir={x:grid,y:0}; // 右滑
+        else if(dx < -30 && dir.x===0) dir={x:-grid,y:0}; // 左滑
+      } else {
+        // 纵向滑动
+        if(dy > 30 && dir.y===0) dir={x:0,y:grid}; // 下滑
+        else if(dy < -30 && dir.y===0) dir={x:0,y:-grid}; // 上滑
+      }
+      touchStartX = null; touchStartY = null;
+    }
+    canvas.addEventListener('touchstart', handleTouchStart, {passive:true});
+    canvas.addEventListener('touchend', handleTouchEnd);
     // 按钮点击逻辑，兼容显示/隐藏
     startBtn.onclick = ()=>{
       initGame();
