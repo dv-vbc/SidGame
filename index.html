@@ -4,20 +4,70 @@
   <meta charset="UTF-8"/>
   <title>Snake Game</title>
   <style>
-    body{margin:0;display:flex;justify-content:center;align-items:center;height:100vh;background:#111;}
-    canvas{background:#000;display:block;}
+    body{margin:0;padding:0;display:flex;flex-direction:column;align-items:center;background:#111;font-family:sans-serif;color:#eee;}
+    #game{background:#000;display:block;}
+    #controls{margin-top:10px;}
+    button{margin:0 5px;padding:5px 10px;background:#333;color:#fff;border:none;border-radius:3px;cursor:pointer;}
+    button:hover{background:#555;}
+    #info{margin-top:10px;}
+    #instructions{max-width:400px;margin-top:15px;padding:10px;background:#222;border-radius:5px;}
   </style>
 </head>
 <body>
+  <h1>Snake Game</h1>
   <canvas id="game" width="400" height="400"></canvas>
+  <div id="controls">
+    <button id="startBtn">开始游戏</button>
+    <button id="pauseBtn" disabled>暂停</button>
+    <button id="resumeBtn" disabled>继续</button>
+    <button id="restartBtn" disabled>重新开始</button>
+  </div>
+  <div id="info">
+    <span id="score">得分: 0</span> | 
+    <span id="level">关卡: 1</span> | 
+    <span id="best">最高分: 0</span>
+  </div>
+  <div id="instructions">
+    <strong>操作说明：</strong>
+    <ul>
+      <li>使用键盘方向键控制蛇的移动。</li>
+      <li>点击“开始游戏”进入游戏，期间可以使用“暂停”和“继续”。</li>
+      <li>吃到食物得 1 分，得分达到一定阈值后关卡提升，蛇速会加快。</li>
+      <li>游戏结束后会记录本次得分，最高分会保存在本地（localStorage），并显示在左侧。</li>
+    </ul>
+  </div>
   <script>
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
     const grid = 20;
-    let snake = [{x:200, y:200}];
-    let dir = {x:0, y:-grid};
-    let food = {x:0, y:0};
-    let gameOver = false;
+    let snake, dir, food, gameOver, running, score, level, speed, intervalId;
+    const scoreEl = document.getElementById('score');
+    const levelEl = document.getElementById('level');
+    const bestEl = document.getElementById('best');
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resumeBtn = document.getElementById('resumeBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const BEST_KEY = 'sidgame_best_score';
+    const HISTORY_KEY = 'sidgame_score_history';
+
+    function initGame(){
+      snake = [{x:200, y:200}];
+      dir = {x:0, y:-grid};
+      food = {x:0, y:0};
+      gameOver = false;
+      running = false;
+      score = 0;
+      level = 1;
+      speed = 200; // ms per move, will decrease as level rises
+      updateUI();
+    }
+    function updateUI(){
+      scoreEl.textContent = `得分: ${score}`;
+      levelEl.textContent = `关卡: ${level}`;
+      const best = localStorage.getItem(BEST_KEY) || 0;
+      bestEl.textContent = `最高分: ${best}`;
+    }
     function randomFood(){
       food.x = Math.floor(Math.random()*canvas.width/grid)*grid;
       food.y = Math.floor(Math.random()*canvas.height/grid)*grid;
@@ -30,28 +80,55 @@
       ctx.fillStyle = '#f00';
       ctx.fillRect(food.x, food.y, grid-1, grid-1);
     }
-    function update(){
-      if(gameOver) return;
+    function step(){
+      if(!running) return;
       const head = {x: snake[0].x + dir.x, y: snake[0].y + dir.y};
-      // collision with walls or self
+      // wall / self collision
       if(head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= canvas.height || snake.some(s=>s.x===head.x && s.y===head.y)){
-        gameOver = true;
-        alert('Game Over');
+        endGame();
         return;
       }
       snake.unshift(head);
       if(head.x===food.x && head.y===food.y){
+        score++;
+        // level up every 5 points
+        if(score % 5 === 0){
+          level++;
+          speed = Math.max(50, speed - 30); // increase speed, min 50ms
+        }
         randomFood();
       } else {
         snake.pop();
       }
-    }
-    function loop(){
-      update();
+      updateUI();
       draw();
-      requestAnimationFrame(loop);
+    }
+    function startLoop(){
+      clearInterval(intervalId);
+      intervalId = setInterval(step, speed);
+    }
+    function endGame(){
+      running = false;
+      clearInterval(intervalId);
+      gameOver = true;
+      alert(`游戏结束！得分: ${score}`);
+      // update best score
+      const best = parseInt(localStorage.getItem(BEST_KEY)||'0',10);
+      if(score > best){
+        localStorage.setItem(BEST_KEY, score);
+      }
+      // store history (array of scores)
+      const hist = JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');
+      hist.push({score, date: new Date().toISOString()});
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
+      // enable restart button
+      restartBtn.disabled = false;
+      pauseBtn.disabled = true;
+      resumeBtn.disabled = true;
+      updateUI();
     }
     function changeDir(e){
+      if(!running) return;
       switch(e.key){
         case 'ArrowUp': if(dir.y===0) dir={x:0,y:-grid}; break;
         case 'ArrowDown': if(dir.y===0) dir={x:0,y:grid}; break;
@@ -59,9 +136,46 @@
         case 'ArrowRight': if(dir.x===0) dir={x:grid,y:0}; break;
       }
     }
-    randomFood();
+    // button handlers
+    startBtn.onclick = ()=>{
+      initGame();
+      randomFood();
+      draw();
+      running = true;
+      startLoop();
+      startBtn.disabled = true;
+      pauseBtn.disabled = false;
+      restartBtn.disabled = true;
+    };
+    pauseBtn.onclick = ()=>{
+      running = false;
+      clearInterval(intervalId);
+      pauseBtn.disabled = true;
+      resumeBtn.disabled = false;
+    };
+    resumeBtn.onclick = ()=>{
+      if(gameOver) return;
+      running = true;
+      startLoop();
+      pauseBtn.disabled = false;
+      resumeBtn.disabled = true;
+    };
+    restartBtn.onclick = ()=>{
+      initGame();
+      randomFood();
+      draw();
+      startBtn.disabled = true;
+      pauseBtn.disabled = false;
+      resumeBtn.disabled = true;
+      restartBtn.disabled = true;
+      running = true;
+      startLoop();
+    };
     window.addEventListener('keydown', changeDir);
-    requestAnimationFrame(loop);
+    // initial UI state
+    initGame();
+    draw();
   </script>
 </body>
 </html>
+
