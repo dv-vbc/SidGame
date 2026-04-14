@@ -218,10 +218,31 @@
       resumeBtn.style.display = 'none';
       restartBtn.style.display = 'none';
     };
-    // 键盘快捷键（S,P,R,N）以及方向键
+    // 键盘快捷键（S,P,R,N）以及方向键，空格键用于状态切换，Esc 用于重新开始
     window.addEventListener('keydown', (e)=>{
       if(e.target !== document.body) return;
       const key = e.key.toLowerCase();
+      // 空格键：在不同状态下分别对应开始/暂停/继续
+      if(e.code === 'Space'){
+        e.preventDefault();
+        if(!startBtn.disabled){
+          startBtn.click();
+        } else if(!pauseBtn.disabled){
+          pauseBtn.click();
+        } else if(!resumeBtn.disabled){
+          resumeBtn.click();
+        }
+        return;
+      }
+      // ESC 键：重新开始（仅在游戏结束后可用）
+      if(e.code === 'Escape'){
+        if(!restartBtn.disabled){
+          e.preventDefault();
+          restartBtn.click();
+        }
+        return;
+      }
+      // 其他快捷键
       if(key === 's' && !startBtn.disabled){ e.preventDefault(); startBtn.click(); }
       else if(key === 'p' && !pauseBtn.disabled){ e.preventDefault(); pauseBtn.click(); }
       else if(key === 'r' && !resumeBtn.disabled){ e.preventDefault(); resumeBtn.click(); }
